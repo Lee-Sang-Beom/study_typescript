@@ -48,6 +48,21 @@ class TodoConsole{
                 case Commands.Add:
                     this.promptAdd();
                     break;
+
+                case Commands.Purge:
+                    this.todoCollection.removeComplete();
+                    this.promptUser();
+                    break;
+
+                case Commands.Complete:
+                    if(this.todoCollection.getItemCounts().incomplete > 0){ // 완료되지않은게 하나라도 있을때만
+                        this.promptComplete();
+                    }
+                    else{
+                        this.promptUser();
+                    }
+                    break;
+                
             }
 
             
@@ -69,6 +84,39 @@ class TodoConsole{
         })
     }
 
+    promptComplete() : void{
+        console.clear();
+        inquirer.prompt({
+            type : "checkbox",
+            name : "complete", // 명령어로 받았을때의 값을 받아오는 인덱스로 생각. (값을 가져오는 네임)
+            message : "Mark Tasks Complete",
+            choices : this.todoCollection.getTodoItems(this.showCompleted).map((item) => ({
+                // 객체형태로 리턴.
+                name : item.task, // 체크박스의 타이틀
+                value : item.id, // id를 비교해 체크할지 말지를 비교
+                checked : item.complete // 체크박스가 쭉 나왔을때, complete가 이미 true라면 체크박스가 체크된상태로 화면에 나올것임
+            }))
+            }).then((answer) => { // 사용자가 체크이후 엔터를 눌렀을때의 수순임. 즉, 엔터를 눌렀으면 뭘하냐
+                let completedTask = answer["complete"] as number[]; // completedTask에는 체크된 item의 id가 배열로 넘어옴 
+                // 사용자가 선택한 value들이 배열로 올텐데 그걸 받을거임. number의 배열형태로 단언.고정함
+                
+                this.todoCollection.getTodoItems(true).forEach((item) => {
+                    // foreach를 돌면서 모든 아이템에 대해 아이템을 하나씩 꺼냄
+                    this.todoCollection.markComplete(
+                        item.id, 
+                        completedTask.find((id) => id === item.id) != undefined)
+                    // complete가 완료되었을경우 상태를 바꿈. 만약 찾지못하면 undefined 반환
+                    // 아이디의 일치여부를 확인하고, 체크를 표시하고 빼는 작업의 과정이 여기서진행
+                });
+                this.promptUser();
+            })
+            // then하면서, 어떻게 관련내용을 처리할지 명시
+
+
+            // 해당 3가지의 값을 가진 리터럴 객체들로 초이스 값을 주면, 체크박스 형태의 리스트들이 좌악 나옴
+            // 기존에 있는 todoCollection으로 채워야함
+            // choice명령어는 사용자가 선택 항목을 보고 선택항목의 인덱스를 반환 합니다
+    }
 }
 
 export default TodoConsole;
