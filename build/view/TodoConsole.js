@@ -30,13 +30,14 @@ const data_1 = require("../data");
 const Command_1 = require("../model/Command");
 class TodoConsole {
     constructor() {
+        this.showCompleted = true;
         const sampleTodos = data_1.data.map((item) => new Todoitem_1.default(item.id, item.task, item.complete));
         this.todoCollection = new TodoCollection_1.default('my Todo List', sampleTodos);
     }
     displayTodoList() {
         console.log(`=====${this.todoCollection.userName}====` +
-            `${this.todoCollection.getItemCounts().incomplete}items todo`); // incomplte된 count 수 표현
-        this.todoCollection.getTodoItems(true).forEach((item) => item.printDetails());
+            `(${this.todoCollection.getItemCounts().incomplete} items todo)`); // incomplte된 count 수 표현
+        this.todoCollection.getTodoItems(this.showCompleted).forEach((item) => item.printDetails());
     }
     promptUser() {
         console.clear();
@@ -47,9 +48,33 @@ class TodoConsole {
             message: 'Choose option',
             choices: Object.values(Command_1.Commands), // 전체value들을 다 넣을수있게 object.values를..
         }).then((answer) => {
-            if (answer['command'] !== Command_1.Commands.Quit) {
-                this.promptUser();
+            // if(answer['command'] !== Commands.Quit)
+            // {
+            //     this.promptUser();
+            // }
+            switch (answer['command']) {
+                case Command_1.Commands.Toggle:
+                    this.showCompleted = !this.showCompleted;
+                    // 이 키가 눌릴때마다 전체 todolist가 출력될 것인지, 아니면 해야 할 일(false)만 출력되게 할 것인지 토글됨
+                    this.promptUser();
+                    break;
+                case Command_1.Commands.Add:
+                    this.promptAdd();
+                    break;
             }
+        });
+    }
+    promptAdd() {
+        console.clear();
+        inquirer.prompt({
+            type: "input",
+            name: "add",
+            message: "Enter Task : "
+        }).then((answer) => {
+            if (answer["add"] !== "") { // 아무 문자열도 안들어오지 않았다 = 뭔가 들어왔다. 
+                this.todoCollection.addTodo(answer['add']); // answer['add']에 입력한 task가 들어오는 것임.
+            }
+            this.promptUser();
         });
     }
 }
